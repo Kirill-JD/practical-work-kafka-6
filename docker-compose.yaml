@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    restart: always
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    volumes:
+      - data-zookeeper-log:/var/lib/zookeeper/log
+      - data-zookeeper-data:/var/lib/zookeeper/data
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+    networks:
+      - kafka-network
+
+
+  kafka-0:
+    image: confluentinc/cp-kafka:7.4.4
+    restart: always
+    container_name: kafka-0
+    hostname: kafka-0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - data-kafka-0:/var/lib/kafka/data
+      - ./certs/kafka-0/creds:/etc/kafka/secrets
+      - ./config/kafka/server-0.properties:/etc/kafka/server.properties
+      - ./config/kafka/adminclient-configs.conf:/tmp/adminclient-configs.conf
+      - ./certs/admin/creds:/etc/kafka/admin
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: SSL://0.0.0.0:9092,SSL_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9092,SSL_INTERNAL://kafka-0:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,SSL_INTERNAL:SSL
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL_INTERNAL
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka-0.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: kafka-0_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: kafka-0_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka-0.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: kafka-0_truststore_creds
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_CONFIG_FILE: /etc/kafka/server.properties
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: true
+      KAFKA_HEAP_OPTS: "-Xms512M -Xmx1G"
+      KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=DEBUG"
+    networks:
+      - kafka-network
+
+
+  kafka-1:
+    image: confluentinc/cp-kafka:7.4.4
+    restart: always
+    container_name: kafka-1
+    hostname: kafka-1
+    depends_on:
+      - kafka-0
+    ports:
+      - "9093:9093"
+    volumes:
+      - data-kafka-1:/var/lib/kafka/data
+      - ./certs/kafka-1/creds:/etc/kafka/secrets
+      - ./config/kafka/server-1.properties:/etc/kafka/server.properties
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: SSL://0.0.0.0:9093,SSL_INTERNAL://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9093,SSL_INTERNAL://kafka-1:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,SSL_INTERNAL:SSL
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL_INTERNAL
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka-1.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: kafka-1_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: kafka-1_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka-1.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: kafka-1_truststore_creds
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_CONFIG_FILE: /etc/kafka/server.properties
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: true
+      KAFKA_HEAP_OPTS: "-Xms512M -Xmx1G"
+    networks:
+      - kafka-network
+
+
+  kafka-2:
+    image: confluentinc/cp-kafka:7.4.4
+    restart: always
+    container_name: kafka-2
+    hostname: kafka-2
+    depends_on:
+      - kafka-1
+    ports:
+      - "9094:9094"
+    volumes:
+      - data-kafka-2:/var/lib/kafka/data
+      - ./certs/kafka-2/creds:/etc/kafka/secrets
+      - ./config/kafka/server-2.properties:/etc/kafka/server.properties
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: SSL://0.0.0.0:9094,SSL_INTERNAL://0.0.0.0:29094
+      KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9094,SSL_INTERNAL://kafka-2:29094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL,SSL_INTERNAL:SSL
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL_INTERNAL
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka-2.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: kafka-2_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: kafka-2_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka-2.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: kafka-2_truststore_creds
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: https
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_CONFIG_FILE: /etc/kafka/server.properties
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: true
+      KAFKA_HEAP_OPTS: "-Xms512M -Xmx1G"
+    networks:
+      - kafka-network
+
+
+volumes:
+  data-zookeeper-log:
+  data-zookeeper-data:
+  data-kafka-0:
+  data-kafka-1:
+  data-kafka-2:
+
+
+networks:
+  kafka-network:
